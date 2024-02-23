@@ -1,4 +1,4 @@
-// https://gist.github.com/gerkirill/35f5d1cf4abd4f569e33
+// credit goes to https://gist.github.com/gerkirill/35f5d1cf4abd4f569e33
 package main
 
 import (
