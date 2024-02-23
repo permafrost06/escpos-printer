@@ -28,7 +28,7 @@ func main() {
 
 	err = printer.writeFile(os.Args[2])
 	if err != nil {
-		fmt.Println("[Error] Could not print file")
+		fmt.Println("[Error] Could not print file", err)
 	}
 
 	printer.closePage()
