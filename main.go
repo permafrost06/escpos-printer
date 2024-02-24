@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -21,40 +22,6 @@ func init() {
 	flag.StringVar(&action, "action", "listen", "listen, print, or generate?")
 	flag.IntVar(&port, "port", 35625, "Port to use when serving")
 	flag.StringVar(&outFile, "outfile", "output.bin", "Output filename for the generated escpos code")
-}
-
-func printFile(printerName string, file string) {
-	fmt.Printf(
-		"Attempting to send file [%s] to printer [%s].\n",
-		file,
-		printerName,
-	)
-
-	printer, err := OpenNewPrinter(printerName)
-	if err != nil {
-		fmt.Println("[Error] Could not open printer", err)
-		return
-	}
-	defer func() {
-		err := printer.Close()
-		if err != nil {
-			fmt.Println("[Error] Could not correctly close printer", err)
-		}
-	}()
-
-	printer.openDoc("DKNCK Receipt")
-	printer.openPage()
-
-	defer func() {
-		printer.closePage()
-		printer.closeDoc()
-	}()
-
-	err = printer.writeFile(file)
-	if err != nil {
-		fmt.Println("[Error] Could not print file", err)
-		return
-	}
 }
 
 type InvoiceItem struct {
@@ -196,7 +163,7 @@ func printInvoice(req PrintRequest) {
 
 	p.PrintAndCut()
 	f.Close()
-	printFile(flag.Args()[0], "output.bin")
+	PrintFile(flag.Args()[0], "output.bin", "DKNCK Receipt")
 }
 
 func listen(printerName string, file string) {
@@ -226,8 +193,7 @@ func listen(printerName string, file string) {
 }
 
 func generate() {
-	f, _ := os.Create(outFile)
-	defer f.Close()
+	f := new(bytes.Buffer)
 
 	p := escpos.New(f)
 
@@ -282,16 +248,30 @@ ID       Item                   Price Qty Total
 	p.LineFeed()
 
 	p.PrintAndCut()
-	printFile(flag.Args()[0], "output.bin")
+	PrintFile(flag.Args()[0], "output.bin", "DKNCK Receipt")
 }
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
 
+	printerName := args[0]
+	file := args[1]
+
 	switch action {
 	case "print":
-		printFile(args[0], args[1])
+		fmt.Printf(
+			"Attempting to send file [%s] to printer [%s].\n",
+			file,
+			printerName,
+		)
+
+		err := PrintFile(printerName, file, "DKNCK Receipt")
+
+		if err != nil {
+			fmt.Println("[Error] Could not print file", err)
+			return
+		}
 	case "listen":
 		listen(args[0], args[1])
 	case "generate":

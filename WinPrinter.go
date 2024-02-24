@@ -118,3 +118,77 @@ func (p *Printer) writeFile(path string) error {
 
 	return nil
 }
+
+func (p *Printer) writeBytes(document []byte) error {
+	var writePrinter = winspool.NewProc("WritePrinter")
+	var bytesWritten uint32 = 0
+	var docSize uint32 = uint32(len(document))
+	ret, _, err := writePrinter.Call(
+		uintptr(unsafe.Pointer(p.printer)),
+		uintptr(unsafe.Pointer(&document[0])),
+		uintptr(docSize),
+		uintptr(unsafe.Pointer(&bytesWritten)))
+	if ret != 1 {
+		return err
+	}
+
+	return nil
+}
+
+func PrintFile(printerName string, fileName string, docName string) error {
+	printer, err := OpenNewPrinter(printerName)
+	if err != nil {
+		return err
+	}
+	defer func() error {
+		err := printer.Close()
+		if err != nil {
+			return err
+		}
+		return nil
+	}()
+
+	printer.openDoc(docName)
+	printer.openPage()
+
+	defer func() {
+		printer.closePage()
+		printer.closeDoc()
+	}()
+
+	err = printer.writeFile(fileName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func PrintBytes(printerName string, document []byte, docName string) error {
+	printer, err := OpenNewPrinter(printerName)
+	if err != nil {
+		return err
+	}
+	defer func() error {
+		err := printer.Close()
+		if err != nil {
+			return err
+		}
+		return nil
+	}()
+
+	printer.openDoc(docName)
+	printer.openPage()
+
+	defer func() {
+		printer.closePage()
+		printer.closeDoc()
+	}()
+
+	err = printer.writeBytes(document)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
