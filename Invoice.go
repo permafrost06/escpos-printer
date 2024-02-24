@@ -79,11 +79,6 @@ func printTableFooter(p *escpos.Escpos, subtotal int) {
 	p.LineFeed()
 }
 
-func printBarcode(p *escpos.Escpos, id int) {
-	byteCode := append([]byte(fmt.Sprintf("DKNCKS%d", id)), 0)
-	p.WriteRaw(append([]byte{0x1d, 0x6b, 0x04}, byteCode...))
-}
-
 func printMessage(p *escpos.Escpos) {
 	message := `Please bring cash memo for returning products`
 
@@ -121,7 +116,7 @@ func GetInvoiceBytes(req PrintRequest) []byte {
 
 	p.LineFeed()
 
-	printBarcode(p, req.Invoice.ID)
+	p.CODE39(fmt.Sprintf("DKNCKS%d", req.Invoice.ID))
 	printMessage(p)
 
 	printBottomPadding(p)
