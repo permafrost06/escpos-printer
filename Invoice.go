@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hennedo/escpos"
+	"github.com/permafrost06/escpos"
 )
 
 func printShopName(p *escpos.Escpos) {
