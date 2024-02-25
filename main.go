@@ -45,9 +45,15 @@ type PrintRequest struct {
 	Invoice    Invoice
 }
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
 func listen() {
 	http.HandleFunc("/print-escpos", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		if r.Method != "POST" {
+			http.Error(w, "method not supported", http.StatusBadRequest)
 			return
 		}
 
