@@ -2,9 +2,7 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
-	"os"
 
 	"github.com/permafrost06/escpos"
 )
@@ -121,7 +119,15 @@ func GetInvoiceBytes(req PrintRequest) []byte {
 
 	p.LineFeed()
 
-	p.CODE39(fmt.Sprintf("DKNCKS%d", req.Invoice.ID))
+	p.WriteRaw([]byte{0x1d, 0x68, 0x50})
+	p.WriteRaw([]byte{0x1d, 0x77, 0x04})
+	p.WriteRaw([]byte{0x1d, 0x66, 0x00})
+	p.WriteRaw([]byte{0x1d, 0x48, 0x02})
+	p.WriteRaw([]byte{0x1d, 0x6b, 0x04})
+	barcode := fmt.Sprintf("S%08d", req.Invoice.ID)
+	byteCode := append([]byte(barcode), 0)
+	p.WriteRaw(byteCode)
+
 	printMessage(p)
 
 	printBottomPadding(p)
@@ -129,64 +135,4 @@ func GetInvoiceBytes(req PrintRequest) []byte {
 	p.PrintAndCut()
 
 	return f.Bytes()
-}
-
-func GenerateFile(filename string) {
-	f, _ := os.Create(filename)
-	defer f.Close()
-
-	p := escpos.New(f)
-
-	p.Bold(true).Size(2, 2).Justify(escpos.JustifyCenter).Write("DK & NCK")
-	p.LineFeed()
-
-	address := `Shop: 32 & 44, 4th Floor, Anexco Tower
-8 Phoenix Road, Fulbaria, Shahbag
-Dhaka-1000`
-
-	p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write(address)
-	p.LineFeed()
-
-	phone := `Phone: 01556341569, 01832775999`
-
-	p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write(phone)
-	p.LineFeed()
-	p.LineFeed()
-
-	p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write("Invoice No: 518")
-	p.LineFeed()
-	p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write("Date: 23/02/2024")
-	p.LineFeed()
-	p.LineFeed()
-
-	table := `
-ID       Item                    Price Qty Total
-------------------------------------------------
-00000066 TROWSER SHARPA            900   2  1800
-00000065 SHOE RED TAPE            2800   1  2800
-00000062 HAND GLOVES               500   1   500
-------------------------------------------------
-                                Sub Total:  5100
-`
-
-	p.Write(table)
-	p.LineFeed()
-	p.LineFeed()
-
-	byteCode := append([]byte("DKNCKS518"), 0)
-	p.WriteRaw(append([]byte{0x1d, 0x6b, 0x04}, byteCode...))
-
-	message := `Please bring cash memo for returning products`
-
-	p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write(message)
-	p.LineFeed()
-
-	p.Bold(true).Size(1, 1).Justify(escpos.JustifyCenter).Write("Thank you for shopping with DK & NCK")
-	p.LineFeed()
-	p.LineFeed()
-	p.LineFeed()
-	p.LineFeed()
-
-	p.PrintAndCut()
-	PrintFile(flag.Args()[0], "output.bin", "DKNCK Receipt")
 }

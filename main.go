@@ -113,7 +113,5 @@ func main() {
 		}
 	case "listen":
 		listen()
-	case "generate":
-		GenerateFile(outFile)
 	}
 }
