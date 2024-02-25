@@ -9,12 +9,13 @@ import (
 )
 
 var (
-	action      string
-	port        int
-	outFile     string
-	printerName string
-	file        string
+	action  string
+	port    int
+	outFile string
+	file    string
 )
+
+var printerName = "Receipt Printer"
 
 const docName = "DK & NCK Receipt"
 
@@ -64,6 +65,8 @@ func listen() {
 
 		bytes := GetInvoiceBytes(printReq)
 		PrintBytes(printerName, bytes, docName)
+
+		fmt.Fprintf(w, "everything looks okay")
 	})
 
 	fmt.Printf("Starting server on port %d\n", port)
@@ -80,8 +83,13 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	printerName = args[0]
-	file = args[1]
+	if len(args) == 1 {
+		printerName = args[0]
+	}
+
+	if len(args) == 2 {
+		file = args[1]
+	}
 
 	switch action {
 	case "print":
