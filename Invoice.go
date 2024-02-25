@@ -46,25 +46,30 @@ func printDate(p *escpos.Escpos, date string) {
 
 func printTableHeader(p *escpos.Escpos) {
 	header := `
-ID       Item                   Price Qty Total
------------------------------------------------`
-	// 00000000 TROWSER SHARPA          3000   7 21000
-	// -----------------------------------------------
-	//                                Sub Total: 21000
+ID       Item                    Price Qty Total
+------------------------------------------------`
 
 	p.Write(header)
 	p.LineFeed()
 }
 
+func trim(str string, length int) string {
+	if len(str) < length {
+		return str
+	}
+
+	return str[:length]
+}
+
 func printItems(p *escpos.Escpos, items []InvoiceItem) {
 	for _, item := range items {
 		row := fmt.Sprintf(
-			"%s %s %d %d %d",
-			item.Product_id,
-			item.Name,
-			item.Unit_price,
-			item.Quantity,
-			item.Total_price,
+			"%08s %-23s %5s %3s %5s",
+			trim(item.Product_id, 8),
+			trim(item.Name, 23),
+			trim(fmt.Sprint(item.Unit_price), 5),
+			trim(fmt.Sprint(item.Quantity), 3),
+			trim(fmt.Sprint(item.Total_price), 5),
 		)
 		p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write(row)
 		p.LineFeed()
@@ -72,8 +77,8 @@ func printItems(p *escpos.Escpos, items []InvoiceItem) {
 }
 
 func printTableFooter(p *escpos.Escpos, subtotal int) {
-	footer := "-----------------------------------------------"
-	footer += fmt.Sprintf("                                Sub Total: %d", subtotal)
+	footer := "------------------------------------------------"
+	footer += fmt.Sprintf("                                 Sub Total: %d", subtotal)
 
 	p.Write(footer)
 	p.LineFeed()
@@ -155,13 +160,13 @@ Dhaka-1000`
 	p.LineFeed()
 
 	table := `
-ID       Item                   Price Qty Total
------------------------------------------------
-00000066 TROWSER SHARPA           900   2  1800
-00000065 SHOE RED TAPE           2800   1  2800
-00000062 HAND GLOVES              500   1   500
------------------------------------------------
-                               Sub Total:  5100
+ID       Item                    Price Qty Total
+------------------------------------------------
+00000066 TROWSER SHARPA            900   2  1800
+00000065 SHOE RED TAPE            2800   1  2800
+00000062 HAND GLOVES               500   1   500
+------------------------------------------------
+                                Sub Total:  5100
 `
 
 	p.Write(table)
