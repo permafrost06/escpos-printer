@@ -57,6 +57,11 @@ func listen() {
 			return
 		}
 
+		if printReq.Secret_key != "supersecret" {
+			http.Error(w, "not authorized", http.StatusBadRequest)
+			return
+		}
+
 		bytes := GetInvoiceBytes(printReq)
 		PrintBytes(printerName, bytes, docName)
 	})
