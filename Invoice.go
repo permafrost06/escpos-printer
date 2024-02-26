@@ -28,8 +28,8 @@ func printPhone(p *escpos.Escpos) {
 	p.LineFeed()
 }
 
-func printInvoiceId(p *escpos.Escpos, id int) {
-	idString := fmt.Sprintf("Invoice No: %d", id)
+func printInvoiceId(p *escpos.Escpos, id string) {
+	idString := fmt.Sprintf("Invoice No: %s", id)
 
 	p.Bold(false).Size(1, 1).Justify(escpos.JustifyCenter).Write(idString)
 	p.LineFeed()
@@ -63,9 +63,9 @@ func printItems(p *escpos.Escpos, items []InvoiceItem) {
 	for _, item := range items {
 		row := fmt.Sprintf(
 			"%08s %-23s %5s %3s %5s",
-			trim(item.Product_id, 8),
+			trim(fmt.Sprint(item.Product_id), 8),
 			trim(item.Name, 23),
-			trim(fmt.Sprint(item.Unit_price), 5),
+			trim(item.Unit_price, 5),
 			trim(fmt.Sprint(item.Quantity), 3),
 			trim(fmt.Sprint(item.Total_price), 5),
 		)
@@ -74,9 +74,9 @@ func printItems(p *escpos.Escpos, items []InvoiceItem) {
 	}
 }
 
-func printTableFooter(p *escpos.Escpos, subtotal int) {
+func printTableFooter(p *escpos.Escpos, subtotal string) {
 	footer := "------------------------------------------------"
-	footer += fmt.Sprintf("                                 Sub Total: %d", subtotal)
+	footer += fmt.Sprintf("                                 Sub Total: %s", subtotal)
 
 	p.Write(footer)
 	p.LineFeed()
@@ -124,7 +124,7 @@ func GetInvoiceBytes(req PrintRequest) []byte {
 	p.WriteRaw([]byte{0x1d, 0x66, 0x00})
 	p.WriteRaw([]byte{0x1d, 0x48, 0x02})
 	p.WriteRaw([]byte{0x1d, 0x6b, 0x04})
-	barcode := fmt.Sprintf("S%08d", req.Invoice.ID)
+	barcode := fmt.Sprintf("S%08s", req.Invoice.ID)
 	byteCode := append([]byte(barcode), 0)
 	p.WriteRaw(byteCode)
 

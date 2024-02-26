@@ -28,16 +28,16 @@ func init() {
 type InvoiceItem struct {
 	Product_id  string
 	Name        string
-	Unit_price  int
-	Quantity    int
-	Total_price int
+	Unit_price  string
+	Quantity    string
+	Total_price string
 }
 
 type Invoice struct {
-	ID       int
+	ID       string
 	Date     string
 	Items    []InvoiceItem
-	Subtotal int
+	Subtotal string
 }
 
 type PrintRequest struct {
@@ -45,14 +45,23 @@ type PrintRequest struct {
 	Invoice    Invoice
 }
 
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-}
-
 func listen() {
-	http.HandleFunc("/print-escpos", func(w http.ResponseWriter, r *http.Request) {
-		enableCors(&w)
+	http.HandleFunc("/print-receipt", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			fmt.Println("OPTIONS request received")
+			w.Header().Add("Connection", "keep-alive")
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+			w.Header().Add("Access-Control-Allow-Methods", "POST")
+			w.Header().Add("Access-Control-Allow-Headers", "content-type")
+			w.Header().Add("Access-Control-Max-Age", "86400")
+			fmt.Println("handled preflight")
+			return
+		}
+
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
 		if r.Method != "POST" {
+			fmt.Println("not POST or OPTIONS method, abort")
 			http.Error(w, "method not supported", http.StatusBadRequest)
 			return
 		}
@@ -60,23 +69,32 @@ func listen() {
 		var printReq PrintRequest
 		err := json.NewDecoder(r.Body).Decode(&printReq)
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
+		fmt.Println("request:", printReq)
+
 		if printReq.Secret_key != "supersecret" {
+			fmt.Println("not authorized")
 			http.Error(w, "not authorized", http.StatusBadRequest)
 			return
 		}
 
-		bytes := GetInvoiceBytes(printReq)
-		PrintBytes(printerName, bytes, docName)
+		fmt.Println("secret key matches")
 
-		fmt.Fprintf(w, "everything looks okay")
+		bytes := GetInvoiceBytes(printReq)
+		fmt.Printf("sending receipt to printer %s\n", printerName)
+		PrintBytes(printerName, bytes, docName)
+		fmt.Println("receipt sent to printer")
+
+		fmt.Fprintf(w, "printing receipt")
 	})
 
 	fmt.Printf("Starting server on port %d\n", port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	fmt.Printf("listening for print requests on http://localhost:%d\n/35625", port)
 
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("Server closed\n")
